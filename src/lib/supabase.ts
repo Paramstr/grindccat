@@ -34,3 +34,37 @@ export async function saveAttempt(attempt: QuestionAttempt & {
   
   return data
 }
+
+export async function saveTestResults(data: {
+  username: string,
+  score: number,
+  timeTaken: number,
+  attempts: QuestionAttempt[]
+}) {
+  const { data: testAttemptData, error: testAttemptError } = await supabase
+    .from('test_attempts')
+    .insert([{
+      username: data.username,
+      score: data.score,
+      time_taken: data.timeTaken,
+      question_attempts: data.attempts.map(attempt => ({
+        question_id: attempt.questionId,
+        question_text: attempt.questionText,
+        options: attempt.options,
+        user_answer: Number(attempt.userAnswer),
+        correct_answer: Number(attempt.correctAnswer),
+        time_spent: attempt.timeSpent,
+        is_correct: attempt.isCorrect,
+        category: attempt.category,
+        explanation: attempt.explanation
+      }))
+    }])
+    .select()
+
+  if (testAttemptError) {
+    console.error('Full error:', testAttemptError)
+    throw testAttemptError
+  }
+
+  return testAttemptData
+}

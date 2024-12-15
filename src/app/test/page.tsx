@@ -4,7 +4,7 @@ import { useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { saveAttempt, supabase } from '@/lib/supabase'
+import { supabase, saveTestResults } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useTestStore } from '@/store/testStore'
 import { QuestionAttempt } from '@/store/types'
@@ -102,35 +102,20 @@ export default function TestPage() {
    
    if (currentQuestionIndex + 1 >= questions.length) {
      const totalTime = Date.now() - testStartTime
+     const allAttempts = [...attempts, attempt]
      
-     try {
-       const { data: testAttemptData, error: testAttemptError } = await supabase
-         .from('test_attempts')
-         .insert([{
-           username: username,
-           score: attempts.filter(a => a.isCorrect).length,
-           time_taken: Math.floor(totalTime / 1000)
-         }])
-         .select()
+     // Start saving in background
+     saveTestResults({
+       username: username!,
+       score: allAttempts.filter(a => a.isCorrect).length,
+       timeTaken: Math.floor(totalTime / 1000),
+       attempts: allAttempts
+     }).catch(err => {
+       console.error('Error saving test results:', err)
+     })
 
-       if (testAttemptError) throw testAttemptError
-
-       if (testAttemptData?.[0]) {
-         const testAttemptId = testAttemptData[0].id
-         
-         for (const attempt of attempts) {
-           await saveAttempt({ 
-             ...attempt, 
-             username: username!,
-             test_attempt_id: testAttemptId
-           })
-         }
-       }
-       
-       router.push('/results')
-     } catch (err) {
-       console.error('Error saving attempt:', err)
-     }
+     // Navigate immediately
+     router.push('/results')
      return
    }
 
