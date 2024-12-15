@@ -1,4 +1,3 @@
-// src/app/countdown/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -12,17 +11,22 @@ export default function CountdownPage() {
   const [countdown, setCountdown] = useState(5)
   const router = useRouter()
 
+  // Handle no username in useEffect, not during render
   useEffect(() => {
     if (!username) {
       router.push('/')
       return
     }
+  }, [username, router])
+
+  // Separate effect for countdown
+  useEffect(() => {
+    if (!username) return; // Don't start countdown if no username
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          router.push('/test')
           return 0
         }
         return prev - 1
@@ -30,7 +34,17 @@ export default function CountdownPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [username, router])
+  }, [username])
+
+  // Separate effect for navigation
+  useEffect(() => {
+    if (countdown === 0 && username) {
+      router.push(`/test?username=${username}`)
+    }
+  }, [countdown, username, router])
+
+  // If no username, render nothing while redirecting
+  if (!username) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
