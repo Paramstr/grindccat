@@ -1,73 +1,76 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { Card, CardContent } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
+import { useRouter } from 'next/navigation'
+import { useTestStore } from '@/store/testStore'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function CountdownPage() {
-  const searchParams = useSearchParams()
-  const username = searchParams.get('username')
-  const [countdown, setCountdown] = useState(5)
+  const [count, setCount] = useState(3)
   const router = useRouter()
+  const { username, startTest } = useTestStore()
 
-  // Handle no username in useEffect, not during render
   useEffect(() => {
     if (!username) {
       router.push('/')
-      return
     }
   }, [username, router])
 
-  // Separate effect for countdown
   useEffect(() => {
-    if (!username) return; // Don't start countdown if no username
+    if (!username) return
 
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          return 0
-        }
-        return prev - 1
-      })
+      setCount((prev) => prev - 1)
     }, 1000)
 
     return () => clearInterval(timer)
   }, [username])
 
-  // Separate effect for navigation
   useEffect(() => {
-    if (countdown === 0 && username) {
-      router.push(`/test?username=${username}`)
+    if (count <= 0) {
+      startTest()
+      router.push('/test')
     }
-  }, [countdown, username, router])
-
-  // If no username, render nothing while redirecting
-  if (!username) return null;
+  }, [count, router, startTest])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-gray-800 border-gray-700">
-          <CardContent className="text-center p-8">
-            <h2 className="text-2xl text-white mb-6">Get Ready {username}!</h2>
-            <div className="relative w-32 h-32 mx-auto mb-6">
-              <div className="absolute inset-0">
-                <Progress 
-                  value={(countdown / 5) * 100} 
-                  className="h-32 w-32 rounded-full"
-                />
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-6xl font-bold text-white">{countdown}</span>
-              </div>
-            </div>
-            <p className="text-gray-400">
-              Your test will begin shortly...
-            </p>
-          </CardContent>
-        </Card>
+      <main className="container mx-auto min-h-screen flex flex-col items-center justify-center">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={count}
+            initial={{ scale: 0.3, opacity: 0 }}
+            animate={{ 
+              scale: 1, 
+              opacity: 1,
+              transition: { type: "spring", duration: 0.5 }
+            }}
+            exit={{ 
+              scale: 1.5, 
+              opacity: 0,
+              transition: { duration: 0.3 }
+            }}
+            className="relative"
+          >
+            <div className="text-8xl font-bold">{count}</div>
+            <motion.div
+              className="absolute inset-0 border-4 border-blue-500 rounded-full"
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ 
+                scale: 1.5, 
+                opacity: 0,
+                transition: { duration: 1, repeat: Infinity }
+              }}
+            />
+          </motion.div>
+        </AnimatePresence>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 text-2xl font-medium text-blue-400"
+        >
+          Get ready...
+        </motion.p>
       </main>
     </div>
   )

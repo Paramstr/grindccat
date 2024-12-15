@@ -1,9 +1,26 @@
 // src/app/page.tsx
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useTestStore } from '@/store/testStore'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
-export default function Home() {
+export default function HomePage() {
+  const [inputUsername, setInputUsername] = useState('')
+  const router = useRouter()
+  const { setUsername } = useTestStore()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (inputUsername.trim()) {
+      setUsername(inputUsername.trim())
+      router.push('/countdown')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4">
@@ -17,7 +34,7 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" action="/countdown">
+            <form className="space-y-4" action="/countdown" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Input
                   type="text"
@@ -25,6 +42,8 @@ export default function Home() {
                   name="username"
                   required
                   className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                  value={inputUsername}
+                  onChange={(e) => setInputUsername(e.target.value)}
                 />
                 <p className="text-xs text-gray-400">
                   This will be displayed on the leaderboard

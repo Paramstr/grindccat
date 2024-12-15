@@ -1,41 +1,28 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { supabase } from '@/lib/supabase'
-import { useRouter, useSearchParams } from 'next/navigation'
-
-interface Question {
- id: string
- category: string
- text: string
- options: string[]
- correct_answer: number
- explanation: string
-}
-
-interface QuestionAttempt {
- questionId: string
- questionText: string
- options: string[]
- userAnswer: number
- correctAnswer: number
- timeSpent: number
- isCorrect: boolean
- category: string
-}
+import { saveAttempt, supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import { useTestStore } from '@/store/testStore'
+import { QuestionAttempt } from '@/store/types'
 
 export default function TestPage() {
- const searchParams = useSearchParams()
- const username = searchParams.get('username')
- const [questions, setQuestions] = useState<Question[]>([])
- const [currentQuestion, setCurrentQuestion] = useState(0)
- const [attempts, setAttempts] = useState<QuestionAttempt[]>([])
- const [timeLeft, setTimeLeft] = useState(18)
- const [startTime] = useState<number>(Date.now())
- const [isLoading, setIsLoading] = useState(true)
+ const {
+   username,
+   questions,
+   currentQuestionIndex,
+   attempts,
+   timeLeft,
+   testStartTime,
+   isLoading,
+   setQuestions,
+   addAttempt,
+   nextQuestion,
+   updateTimeLeft,
+ } = useTestStore()
  const router = useRouter()
 
  // Fetch questions
@@ -47,125 +34,87 @@ export default function TestPage() {
 
    async function fetchQuestions() {
      try {
-       console.log('Fetching questions from Supabase...')
        const { data, error } = await supabase
          .from('questions')
          .select('*')
        
-       if (error) {
-         console.error('Supabase error:', error)
-         return
-       }
-
+       if (error) throw error
        if (!data || data.length === 0) {
          console.warn('No questions found')
          return
        }
 
-       console.log(`Successfully loaded ${data.length} questions`)
        setQuestions(data)
-       setIsLoading(false)
      } catch (err) {
        console.error('Error fetching questions:', err)
      }
    }
 
    fetchQuestions()
- }, [username, router])
+ }, [username, router, setQuestions])
 
  const handleAnswer = useCallback(async (answerIndex: number | null) => {
-   if (!questions[currentQuestion]) return
+   if (!questions[currentQuestionIndex]) return
 
-   const timeSpent = 18 - timeLeft
    const attempt: QuestionAttempt = {
-     questionId: questions[currentQuestion].id,
-     questionText: questions[currentQuestion].text,
-     options: questions[currentQuestion].options,
+     questionId: questions[currentQuestionIndex].id,
+     questionText: questions[currentQuestionIndex].text,
+     options: questions[currentQuestionIndex].options,
      userAnswer: answerIndex ?? -1,
-     correctAnswer: questions[currentQuestion].correct_answer,
-     timeSpent,
-     isCorrect: answerIndex === questions[currentQuestion].correct_answer,
-     category: questions[currentQuestion].category
+     correctAnswer: questions[currentQuestionIndex].correct_answer,
+     timeSpent: 18 - timeLeft,
+     isCorrect: answerIndex === questions[currentQuestionIndex].correct_answer,
+     category: questions[currentQuestionIndex].category,
+     explanation: questions[currentQuestionIndex].explanation,
    }
 
-   const newAttempts = [...attempts, attempt]
-   setAttempts(newAttempts)
+   addAttempt(attempt)
    
-   if (currentQuestion + 1 >= questions.length) {
-     // Test complete - save attempt and navigate to results
-     const totalTime = Date.now() - startTime
+   if (currentQuestionIndex + 1 >= questions.length) {
+     const totalTime = Date.now() - testStartTime
      
-     // Save attempt
      try {
-       const { data: attemptData, error: attemptError } = await supabase
-         .from('attempts')
+       const { data: testAttemptData, error: testAttemptError } = await supabase
+         .from('test_attempts')
          .insert([{
            username: username,
-           score: newAttempts.filter(a => a.isCorrect).length,
+           score: attempts.filter(a => a.isCorrect).length,
            time_taken: Math.floor(totalTime / 1000)
          }])
          .select()
 
-       if (attemptError) throw attemptError
+       if (testAttemptError) throw testAttemptError
 
-       if (attemptData && attemptData[0]) {
-         // Save individual question attempts
-         const questionAttempts = newAttempts.map(attempt => ({
-           attempt_id: attemptData[0].id,
-           question_id: attempt.questionId,
-           user_answer: attempt.userAnswer,
-           is_correct: attempt.isCorrect,
-           time_taken: attempt.timeSpent
-         }))
-
-         const { error: questionAttemptsError } = await supabase
-           .from('question_attempts')
-           .insert(questionAttempts)
-
-         if (questionAttemptsError) throw questionAttemptsError
+       if (testAttemptData?.[0]) {
+         const testAttemptId = testAttemptData[0].id
+         
+         for (const attempt of attempts) {
+           await saveAttempt({ 
+             ...attempt, 
+             username: username!,
+             test_attempt_id: testAttemptId
+           })
+         }
        }
-
-       // Properly encode the URL parameters
-       const encodedAttempts = encodeURIComponent(JSON.stringify(newAttempts))
-       const encodedUsername = encodeURIComponent(username || '')
-       const searchParams = new URLSearchParams()
-       searchParams.set('attempts', encodedAttempts)
-       searchParams.set('time', totalTime.toString())
-       searchParams.set('username', encodedUsername)
-
-       router.push(`/results?${searchParams.toString()}`)
+       
+       router.push('/results')
      } catch (err) {
        console.error('Error saving attempt:', err)
-       // Still navigate to results even if save fails, using the same encoding
-       const encodedAttempts = encodeURIComponent(JSON.stringify(newAttempts))
-       const encodedUsername = encodeURIComponent(username || '')
-       const searchParams = new URLSearchParams()
-       searchParams.set('attempts', encodedAttempts)
-       searchParams.set('time', totalTime.toString())
-       searchParams.set('username', encodedUsername)
-
-       router.push(`/results?${searchParams.toString()}`)
      }
      return
    }
 
-   setCurrentQuestion(currentQuestion + 1)
-   setTimeLeft(18)
- }, [attempts, currentQuestion, questions, router, startTime, timeLeft, username])
+   nextQuestion()
+   updateTimeLeft(18)
+ }, [questions, currentQuestionIndex, timeLeft, attempts, testStartTime, username, addAttempt, nextQuestion, updateTimeLeft, router])
 
  useEffect(() => {
    const timer = setInterval(() => {
-     setTimeLeft((prev) => {
-       if (prev <= 1) {
-         handleAnswer(null) // Auto-submit on timeout
-         return 18
-       }
-       return prev - 1
-     })
+     updateTimeLeft(timeLeft - 1)
    }, 1000)
 
    return () => clearInterval(timer)
- }, [currentQuestion, handleAnswer])
+ }, [timeLeft, updateTimeLeft])
 
  if (isLoading) {
    return (
@@ -190,7 +139,7 @@ export default function TestPage() {
    )
  }
 
- const question = questions[currentQuestion]
+ const question = questions[currentQuestionIndex]
  const progressValue = ((18 - timeLeft) / 18) * 100
 
  return (
@@ -200,7 +149,7 @@ export default function TestPage() {
          <CardHeader className="space-y-4">
            <div className="flex justify-between items-center">
              <CardTitle className="text-white">
-               Question {currentQuestion + 1} of {questions.length}
+               Question {currentQuestionIndex + 1} of {questions.length}
              </CardTitle>
              <span className={`text-xl font-bold ${
                timeLeft <= 5 ? 'text-red-500' : 'text-white'
