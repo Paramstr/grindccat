@@ -34,13 +34,31 @@ export default function TestPage() {
 
    async function fetchQuestions() {
      try {
+       // First try to get unseen questions
        const { data, error } = await supabase
          .from('questions')
          .select('*')
+         .not('id', 'in', 
+           supabase
+             .from('question_attempts')
+             .select('question_id, test_attempts!inner(username)')
+             .eq('test_attempts.username', username)
+         )
+         .order('RANDOM()')
+         .limit(30)
        
        if (error) throw error
-       if (!data || data.length === 0) {
-         console.warn('No questions found')
+
+       // If no unseen questions, get any 50 questions
+       if (!data || data.length < 50) {
+         const { data: allQuestions, error: allError } = await supabase
+           .from('questions')
+           .select('*')
+           .order('RANDOM()')
+           .limit(30)
+         
+         if (allError) throw allError
+         setQuestions(allQuestions || [])
          return
        }
 
