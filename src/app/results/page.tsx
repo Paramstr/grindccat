@@ -62,6 +62,15 @@ export default function ResultsPage() {
             <div className="text-center space-y-2">
               <p className="text-xl text-white">Score: {score} / {attempts.length}</p>
               <p className="text-lg text-gray-400">Total Time: {totalTime} seconds</p>
+              <Button 
+                onClick={() => {
+                  resetTest()
+                  router.push(`/?username=${username}`)
+                }} 
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Take Again
+              </Button>
             </div>
           </CardHeader>
         </Card>

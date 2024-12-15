@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTestStore } from '@/store/testStore'
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,15 @@ export default function HomePage() {
   const [inputUsername, setInputUsername] = useState('')
   const router = useRouter()
   const { setUsername } = useTestStore()
+
+  useEffect(() => {
+    // Get username from URL if present
+    const params = new URLSearchParams(window.location.search)
+    const usernameParam = params.get('username')
+    if (usernameParam) {
+      setInputUsername(usernameParam)
+    }
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

@@ -34,35 +34,47 @@ export default function TestPage() {
 
    async function fetchQuestions() {
      try {
-       // First try to get unseen questions
+       // First get the list of attempted question IDs through the test_attempts table
+       const { data: attemptedQuestions } = await supabase
+         .from('test_attempts')
+         .select(`
+           id,
+           question_attempts(question_id)
+         `)
+         .eq('username', username)
+
+       // Extract all question IDs from all attempts
+       const attemptedIds = attemptedQuestions?.flatMap(
+         attempt => attempt.question_attempts?.map(qa => qa.question_id) || []
+       ) || []
+
+       // Then get unseen questions
        const { data, error } = await supabase
          .from('questions')
          .select('*')
-         .not('id', 'in', 
-           supabase
-             .from('question_attempts')
-             .select('question_id, test_attempts!inner(username)')
-             .eq('test_attempts.username', username)
-         )
-         .order('RANDOM()')
+         .not('id', 'in', `(${attemptedIds.join(',')})`)
          .limit(30)
        
        if (error) throw error
 
-       // If no unseen questions, get any 50 questions
-       if (!data || data.length < 50) {
+       // If no unseen questions or not enough questions, get any 30 questions
+       if (!data || data.length < 30) {
          const { data: allQuestions, error: allError } = await supabase
            .from('questions')
            .select('*')
-           .order('RANDOM()')
            .limit(30)
          
          if (allError) throw allError
-         setQuestions(allQuestions || [])
+         
+         // Shuffle the results in memory
+         const shuffledQuestions = allQuestions ? [...allQuestions].sort(() => Math.random() - 0.5) : []
+         setQuestions(shuffledQuestions)
          return
        }
 
-       setQuestions(data)
+       // Shuffle the results in memory
+       const shuffledQuestions = [...data].sort(() => Math.random() - 0.5)
+       setQuestions(shuffledQuestions)
      } catch (err) {
        console.error('Error fetching questions:', err)
      }
