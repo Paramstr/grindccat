@@ -16,12 +16,75 @@ export default function CountdownPage() {
     async function fetchQuestions() {
       try {
         setLoading(true)
-        const { data, error } = await supabase
-          .from('questions')
-          .select('*')
+        // First get the list of attempted question IDs through the test_attempts table
+        const { data: attemptedQuestions } = await supabase
+          .from('test_attempts')
+          .select(`
+            id,
+            question_attempts(question_id)
+          `)
+          .eq('username', username)
 
-        if (error) throw error
-        if (data) setQuestions(data)
+        // Extract all question IDs from all attempts
+        const attemptedIds = attemptedQuestions?.flatMap(
+          attempt => attempt.question_attempts?.map(qa => qa.question_id) || []
+        ) || []
+
+        // Get 15 unseen questions for each category
+        const [verbalQuestions, mathQuestions] = await Promise.all([
+          supabase
+            .from('questions')
+            .select('*')
+            .eq('category', 'Verbal')
+            .not('id', 'in', `(${attemptedIds.join(',')})`)
+            .limit(15),
+          supabase
+            .from('questions')
+            .select('*')
+            .eq('category', 'Math & Logic')
+            .not('id', 'in', `(${attemptedIds.join(',')})`)
+            .limit(15)
+        ])
+
+        if (verbalQuestions.error || mathQuestions.error) 
+          throw verbalQuestions.error || mathQuestions.error
+
+        // If we don't have enough unseen questions in either category, fetch any questions
+        if (!verbalQuestions.data || !mathQuestions.data || 
+            verbalQuestions.data.length < 15 || mathQuestions.data.length < 15) {
+          const [allVerbal, allMath] = await Promise.all([
+            supabase
+              .from('questions')
+              .select('*')
+              .eq('category', 'Verbal')
+              .limit(15),
+            supabase
+              .from('questions')
+              .select('*')
+              .eq('category', 'Math & Logic')
+              .limit(15)
+          ])
+
+          if (allVerbal.error || allMath.error) 
+            throw allVerbal.error || allMath.error
+
+          // Combine and shuffle both categories
+          const shuffledQuestions = [
+            ...(allVerbal.data || []),
+            ...(allMath.data || [])
+          ].sort(() => Math.random() - 0.5)
+
+          setQuestions(shuffledQuestions)
+          return
+        }
+
+        // Combine and shuffle both categories of unseen questions
+        const shuffledQuestions = [
+          ...verbalQuestions.data,
+          ...mathQuestions.data
+        ].sort(() => Math.random() - 0.5)
+
+        setQuestions(shuffledQuestions)
       } catch (error) {
         console.error('Error fetching questions:', error)
         router.push('/')
@@ -31,7 +94,7 @@ export default function CountdownPage() {
     }
 
     fetchQuestions()
-  }, [setQuestions, setLoading, router])
+  }, [username, setQuestions, setLoading, router])
 
   useEffect(() => {
     if (!username) {
