@@ -41,7 +41,9 @@ export default function HomePage() {
       <div className="absolute inset-0 dotted-background" aria-hidden="true" />
       <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4 gap-8 relative">
         <div className="text-center space-y-2 mb-8">
-          <h1 className="text-6xl font-bold text-zinc-100">Grind CCAT</h1>
+          <h1 className="text-7xl font-bold text-zinc-100 font-tt-neoris">
+            Grind CCAT
+          </h1>
           <a 
             href="https://x.com/maybeParam" 
             target="_blank" 

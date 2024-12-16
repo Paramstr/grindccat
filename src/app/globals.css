@@ -82,3 +82,11 @@ body {
     var(--dot-color);
   opacity: 0.8;
 }
+
+@font-face {
+  font-family: 'TT NEORIS Trial';
+  src: url('/fonts/TT-Neoris-Trial-Bold') format('ttf');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
