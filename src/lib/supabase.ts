@@ -10,29 +10,18 @@ export async function saveAttempt(attempt: QuestionAttempt & {
   username: string, 
   test_attempt_id: string 
 }) {
-  const { data, error } = await supabase
-    .from('attempts')
-    .insert([{
-      username: attempt.username,
-      question_id: attempt.questionId,
-      question_text: attempt.questionText,
-      options: attempt.options,
-      user_answer: Number(attempt.userAnswer),
-      correct_answer: Number(attempt.correctAnswer),
-      time_spent: attempt.timeSpent,
-      is_correct: attempt.isCorrect,
-      category: attempt.category,
-      explanation: attempt.explanation,
-      test_attempt_id: attempt.test_attempt_id
-    }])
-    .select()
+  const response = await fetch('/api/attempts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(attempt)
+  })
 
-  if (error) {
-    console.error('Full error:', error)
-    throw error
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Failed to save attempt')
   }
-  
-  return data
+
+  return response.json()
 }
 
 export async function saveTestResults(data: {
@@ -41,34 +30,18 @@ export async function saveTestResults(data: {
   timeTaken: number,
   attempts: QuestionAttempt[]
 }) {
-  // First create the test attempt
-  const { data: testAttempt, error: testError } = await supabase
-    .from('test_attempts')
-    .insert([{
-      username: data.username,
-      score: data.score,
-      time_taken: data.timeTaken,
-      question_attempts: data.attempts.map(attempt => ({
-        question_id: attempt.questionId,
-        question_text: attempt.questionText,
-        options: attempt.options,
-        user_answer: Number(attempt.userAnswer),
-        correct_answer: Number(attempt.correctAnswer),
-        time_spent: attempt.timeSpent,
-        is_correct: attempt.isCorrect,
-        category: attempt.category,
-        explanation: attempt.explanation,
-        skipped: attempt.skipped
-      }))
-    }])
-    .select()
+  const response = await fetch('/api/test-results', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
 
-  if (testError) {
-    console.error('Error saving test attempt:', testError)
-    throw testError
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Failed to save test results')
   }
 
-  return testAttempt
+  return response.json()
 }
 
 export async function getQuestionCountsByCategory() {

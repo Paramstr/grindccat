@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTestStore } from '@/store/testStore'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
 
 export default function CountdownPage() {
   const [count, setCount] = useState(3)
@@ -18,46 +17,38 @@ export default function CountdownPage() {
         setLoading(true)
         const params = new URLSearchParams(window.location.search)
         const numQuestions = parseInt(params.get('numQuestions') || '30', 10)
-        // Always split evenly between verbal and math
-        const verbalCount = Math.ceil(numQuestions / 2)
-        const mathCount = numQuestions - verbalCount
-
-        // Get random questions for each category
-        const [verbalQuestions, mathQuestions] = await Promise.all([
-          supabase
-            .from('random_verbal_questions')
-            .select('*')
-            .limit(verbalCount),
-          supabase
-            .from('random_math_questions')
-            .select('*')
-            .limit(mathCount)
-        ])
-
-        if (verbalQuestions.error || mathQuestions.error) 
-          throw verbalQuestions.error || mathQuestions.error
-
-        if (!verbalQuestions.data || !mathQuestions.data || 
-            verbalQuestions.data.length < verbalCount || 
-            mathQuestions.data.length < mathCount) {
-          throw new Error('Not enough questions available')
+  
+        const response = await fetch('/api/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, numQuestions })
+        })
+  
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.details || errorData.error || 'Failed to fetch questions')
         }
 
-        // Combine and shuffle both categories
-        const shuffledQuestions = [
-          ...verbalQuestions.data,
-          ...mathQuestions.data
-        ].sort(() => Math.random() - 0.5)
-
-        setQuestions(shuffledQuestions)
+        const data = await response.json()
+        
+        if (!data.questions?.length) {
+          throw new Error('No questions received from server')
+        }
+        
+        setQuestions(data.questions)
       } catch (error) {
         console.error('Error fetching questions:', error)
-        router.push('/')
+        router.push('/?error=fetch-failed')
       } finally {
         setLoading(false)
       }
     }
 
+    if (!username) {
+      router.push('/')
+      return
+    }
+  
     fetchQuestions()
   }, [username, setQuestions, setLoading, router])
 

@@ -96,18 +96,18 @@ export default function TestPage() {
    const totalTime = Date.now() - testStartTime
    const allAttempts = [...attempts, attempt]
    
-   // Start saving in background
-   saveTestResults({
-     username: username!,
-     score: allAttempts.filter(a => a.isCorrect).length,
-     timeTaken: Math.floor(totalTime / 1000),
-     attempts: allAttempts
-   }).catch(err => {
+   try {
+     await saveTestResults({
+       username: username!,
+       score: allAttempts.filter(a => a.isCorrect).length,
+       timeTaken: Math.floor(totalTime / 1000),
+       attempts: allAttempts
+     })
+     router.push('/results')
+   } catch (err) {
      console.error('Error saving test results:', err)
-   })
-
-   // Navigate immediately
-   router.push('/results')
+     router.push('/results')
+   }
  }
 
  if (isLoading) {
