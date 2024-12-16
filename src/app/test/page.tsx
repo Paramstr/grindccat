@@ -96,32 +96,46 @@ export default function TestPage() {
      isCorrect: answerIndex === questions[currentQuestionIndex].correct_answer,
      category: questions[currentQuestionIndex].category,
      explanation: questions[currentQuestionIndex].explanation,
+     skipped: false
    }
 
    addAttempt(attempt)
    
    if (currentQuestionIndex + 1 >= questions.length) {
-     const totalTime = Date.now() - testStartTime
-     const allAttempts = [...attempts, attempt]
-     
-     // Start saving in background
-     saveTestResults({
-       username: username!,
-       score: allAttempts.filter(a => a.isCorrect).length,
-       timeTaken: Math.floor(totalTime / 1000),
-       attempts: allAttempts
-     }).catch(err => {
-       console.error('Error saving test results:', err)
-     })
-
-     // Navigate immediately
-     router.push('/results')
+     handleTestComplete(attempt)
      return
    }
 
    nextQuestion()
    updateTimeLeft(18)
  }, [questions, currentQuestionIndex, timeLeft, attempts, testStartTime, username, addAttempt, nextQuestion, updateTimeLeft, router])
+
+ const handleSkip = useCallback(() => {
+   if (!questions[currentQuestionIndex]) return
+
+   const attempt: QuestionAttempt = {
+     questionId: questions[currentQuestionIndex].id,
+     questionText: questions[currentQuestionIndex].text,
+     options: questions[currentQuestionIndex].options,
+     userAnswer: -1,
+     correctAnswer: questions[currentQuestionIndex].correct_answer,
+     timeSpent: 18 - timeLeft,
+     isCorrect: false,
+     category: questions[currentQuestionIndex].category,
+     explanation: questions[currentQuestionIndex].explanation,
+     skipped: true
+   }
+
+   addAttempt(attempt)
+
+   if (currentQuestionIndex + 1 >= questions.length) {
+     handleTestComplete(attempt)
+     return
+   }
+
+   nextQuestion()
+   updateTimeLeft(18)
+ }, [questions, currentQuestionIndex, timeLeft, addAttempt, nextQuestion, updateTimeLeft])
 
  useEffect(() => {
    const timer = setInterval(() => {
@@ -131,10 +145,29 @@ export default function TestPage() {
    return () => clearInterval(timer)
  }, [timeLeft, updateTimeLeft])
 
+ const handleTestComplete = async (attempt: QuestionAttempt) => {
+   const totalTime = Date.now() - testStartTime
+   const allAttempts = [...attempts, attempt]
+   
+   // Start saving in background
+   saveTestResults({
+     username: username!,
+     score: allAttempts.filter(a => a.isCorrect).length,
+     timeTaken: Math.floor(totalTime / 1000),
+     attempts: allAttempts
+   }).catch(err => {
+     console.error('Error saving test results:', err)
+   })
+
+   // Navigate immediately
+   router.push('/results')
+ }
+
  if (isLoading) {
    return (
-     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-       <main className="container mx-auto min-h-screen flex flex-col items-center justify-center">
+     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 text-white relative">
+       <div className="absolute inset-0 dotted-background" aria-hidden="true" />
+       <main className="container mx-auto min-h-screen flex flex-col items-center justify-center relative">
          <p className="text-xl">Loading questions...</p>
        </main>
      </div>
@@ -155,50 +188,67 @@ export default function TestPage() {
  }
 
  const question = questions[currentQuestionIndex]
- const progressValue = ((18 - timeLeft) / 18) * 100
 
  return (
-   <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-     <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4">
-       <Card className="w-full max-w-2xl bg-gray-800 border-gray-700">
+   <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 text-white relative">
+     <div className="absolute inset-0 dotted-background" aria-hidden="true" />
+     <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4 relative">
+       <Card className="w-full max-w-2xl bg-zinc-800 border-zinc-700">
          <CardHeader className="space-y-4">
            <div className="flex justify-between items-center">
-             <CardTitle className="text-white">
+             <CardTitle className="text-zinc-100">
                Question {currentQuestionIndex + 1} of {questions.length}
              </CardTitle>
              <span className={`text-xl font-bold ${
-               timeLeft <= 5 ? 'text-red-500' : 'text-white'
+               timeLeft <= 5 ? 'text-red-500' : 'text-zinc-100'
              }`}>
-               {timeLeft}s
+               {18 - timeLeft}s
              </span>
            </div>
            <div className="space-y-1">
-             <Progress value={progressValue} className="h-2" />
-             {timeLeft <= 5 && (
+             <Progress 
+               value={((18 - timeLeft) / 18) * 100} 
+               className={`h-2 ${timeLeft === 0 ? 'bg-red-900/30' : ''}`}
+               indicatorClassName={timeLeft === 0 ? 'bg-red-500' : undefined}
+             />
+             {/* {timeLeft <= 5 && (
                <p className="text-red-500 text-sm text-right animate-pulse">
                  Time is running out!
                </p>
-             )}
+             )} */}
            </div>
          </CardHeader>
          <CardContent className="space-y-6">
            <div>
-             <span className="inline-block px-2 py-1 rounded bg-blue-600 text-sm mb-2">
+             <span className={`inline-block px-2 py-1 rounded text-sm mb-2 text-white ${
+               question.category === 'Verbal' 
+                 ? 'bg-purple-600' 
+                 : 'bg-blue-600'
+             }`}>
                {question.category}
              </span>
-             <p className="text-lg text-white">{question.text}</p>
+             <p className="text-lg text-zinc-100">{question.text}</p>
            </div>
            <div className="grid gap-3">
              {question.options.map((option, index) => (
                <Button
                  key={index}
                  variant="outline"
-                 className="w-full text-left justify-start h-auto py-3 bg-gray-700 hover:bg-gray-600 border-gray-600 text-white"
+                 className="w-full text-left justify-start h-auto py-3 bg-zinc-700 hover:bg-zinc-600 hover:text-zinc-200 border-zinc-600 text-white transition-colors"
                  onClick={() => handleAnswer(index)}
                >
                  {option}
                </Button>
              ))}
+             <div className="flex justify-end mt-2">
+               <Button
+                 variant="outline"
+                 className="px-6 py-2 bg-amber-500/20 hover:bg-amber-500/50 hover:text-amber-200 border-amber-500/30 text-amber-300 transition-colors"
+                 onClick={handleSkip}
+               >
+                 Skip Question
+               </Button>
+             </div>
            </div>
          </CardContent>
        </Card>

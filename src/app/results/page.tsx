@@ -22,14 +22,15 @@ export default function ResultsPage() {
 
   if (!attempts.length || !username) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
-        <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+      <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 text-white relative">
+        <div className="absolute inset-0 dotted-background" aria-hidden="true" />
+        <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4 relative">
+          <Card className="w-full max-w-md bg-zinc-800 border-zinc-700">
             <CardContent className="p-6 text-center">
-              <p className="text-white mb-4">No test results available</p>
+              <p className="text-zinc-100 mb-4">No test results available</p>
               <Button 
                 onClick={() => router.push('/')} 
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-zinc-600 hover:bg-zinc-500 text-white"
               >
                 Return Home
               </Button>
@@ -52,22 +53,35 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
-      <main className="container mx-auto min-h-screen flex flex-col items-center py-8 px-4">
-        <Card className="w-full max-w-3xl bg-gray-800 border-gray-700 mb-8">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 text-white relative">
+      <div className="absolute inset-0 dotted-background" aria-hidden="true" />
+      <main className="container mx-auto min-h-screen flex flex-col items-center py-8 px-4 relative">
+      <div className="text-center space-y-2 mb-8">
+        <h1 className="text-6xl font-bold text-zinc-100">Grind CCAT</h1>
+        <a 
+          href="https://x.com/maybeParam" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="inline-block text-sm text-zinc-500 hover:text-zinc-300 transition-all duration-200 tracking-wide font-light hover:tracking-wider"
+        >
+          @maybeParam
+        </a>
+      </div>
+
+        <Card className="w-full max-w-3xl bg-zinc-800 border-zinc-700 mb-8">
           <CardHeader className="space-y-4">
-            <CardTitle className="text-white text-center text-2xl">
+            <CardTitle className="text-zinc-100 text-center text-2xl">
               Results for {username}
             </CardTitle>
             <div className="text-center space-y-2">
-              <p className="text-xl text-white">Score: {score} / {attempts.length}</p>
-              <p className="text-lg text-gray-400">Total Time: {totalTime} seconds</p>
+              <p className="text-xl text-zinc-100">Score: {score} / {attempts.length}</p>
+              <p className="text-lg text-zinc-400">Total Time: {totalTime} seconds</p>
               <Button 
                 onClick={() => {
                   resetTest()
                   router.push(`/?username=${username}`)
                 }} 
-                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
+                className="mt-4 bg-zinc-600 hover:bg-zinc-500 text-white"
               >
                 Take Again
               </Button>
@@ -77,7 +91,7 @@ export default function ResultsPage() {
 
         <div className="w-full max-w-3xl space-y-6">
           {attempts.map((attempt, index) => (
-            <Card key={index} className="bg-gray-800 border-gray-700">
+            <Card key={index} className="bg-zinc-800 border-zinc-700">
               <CardHeader className="space-y-2">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -88,7 +102,7 @@ export default function ResultsPage() {
                     }`}>
                       {attempt.category}
                     </span>
-                    <p className="text-lg font-medium text-white">{attempt.questionText}</p>
+                    <p className="text-lg font-medium text-zinc-100">{attempt.questionText}</p>
                   </div>
                   <div className="flex-shrink-0">
                     {attempt.isCorrect ? (
@@ -163,7 +177,7 @@ export default function ResultsPage() {
             resetTest()
             router.push('/')
           }} 
-          className="mt-8 bg-blue-600 hover:bg-blue-700 text-white"
+          className="mt-8 bg-zinc-600 hover:bg-zinc-500 text-white"
         >
           Return Home
         </Button>

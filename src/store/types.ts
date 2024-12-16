@@ -17,6 +17,7 @@ export interface QuestionAttempt {
   isCorrect: boolean
   category: string
   explanation: string
+  skipped: boolean
 }
 
 export interface TestState {

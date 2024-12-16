@@ -41,7 +41,8 @@ export async function saveTestResults(data: {
   timeTaken: number,
   attempts: QuestionAttempt[]
 }) {
-  const { data: testAttemptData, error: testAttemptError } = await supabase
+  // First create the test attempt
+  const { data: testAttempt, error: testError } = await supabase
     .from('test_attempts')
     .insert([{
       username: data.username,
@@ -56,15 +57,16 @@ export async function saveTestResults(data: {
         time_spent: attempt.timeSpent,
         is_correct: attempt.isCorrect,
         category: attempt.category,
-        explanation: attempt.explanation
+        explanation: attempt.explanation,
+        skipped: attempt.skipped
       }))
     }])
     .select()
 
-  if (testAttemptError) {
-    console.error('Full error:', testAttemptError)
-    throw testAttemptError
+  if (testError) {
+    console.error('Error saving test attempt:', testError)
+    throw testError
   }
 
-  return testAttemptData
+  return testAttempt
 }
