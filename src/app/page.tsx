@@ -39,20 +39,29 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 text-white relative">
       <div className="absolute inset-0 dotted-background" aria-hidden="true" />
-      <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4 pt-24 gap-12 relative">
-      <div className="text-center space-y-2  mb-8">
+      <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4 pt-24 gap-8 relative">
+      <div className="text-center space-y-2  mb-12">
           <h1 className="text-7xl font-bold text-zinc-100 font-tt-neoris">
             Grind CCAT
           </h1>
-          <a 
-            href="https://x.com/maybeParam" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="inline-block text-sm text-zinc-500 hover:text-zinc-300 transition-all duration-200 tracking-wide font-light hover:tracking-wider"
-          >
-            @maybeParam
-        </a>
+          <span className="inline-block text-sm text-zinc-500 tracking-wide font-light ">
+            Built by{" "}
+            <a 
+              href="https://x.com/maybeParam" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-zinc-300 transition-all duration-200"
+            >
+              @maybeParam
+            </a>
+          </span>
       </div>
+
+      <div className="max-w-2xl text-center mb-4">
+          <p className="text-zinc-300 text-base leading-relaxed">
+            Sharpen your mind for the CCAT with real-time practice. This simulator mirrors the actual test&apos;s pressure and question types, letting you practice until you&apos;re confident to tackle the real thing.
+          </p>
+        </div>
 
         <Card className="w-full max-w-md bg-zinc-800 border-zinc-700">
           <CardHeader className="space-y-1">
