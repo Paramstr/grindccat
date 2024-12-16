@@ -19,7 +19,7 @@ const ttNeoris = localFont({
 })
 
 export const metadata: Metadata = {
-  title: "Grind CCAT | CCAT Practice Test Platform",
+  title: "Grind CCAT | Practice Test Platform",
   description: "Sharpen your mind for the CCAT with real-time practice. A simulator that mirrors the actual test's pressure and question types.",
   keywords: ["CCAT", "Criteria Cognitive Aptitude Test", "Practice Test", "Cognitive Assessment", "Test Prep"],
   authors: [
