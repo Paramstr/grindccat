@@ -70,3 +70,38 @@ export async function saveTestResults(data: {
 
   return testAttempt
 }
+
+export async function getQuestionCountsByCategory() {
+  const { data, error } = await supabase
+    .from('questions')
+    .select('category', { count: 'exact', head: true })
+    .or('category.eq.Verbal,category.eq.Math & Logic')
+    .then(async ({ error: countError }) => {
+      if (countError) throw countError;
+      
+      const verbalCount = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('category', 'Verbal');
+      
+      const mathCount = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('category', 'Math & Logic');
+
+      return {
+        data: {
+          verbal: verbalCount.count || 0,
+          math: mathCount.count || 0
+        },
+        error: null
+      };
+    });
+
+  if (error) {
+    console.error('Error fetching question counts:', error);
+    return { verbal: 0, math: 0 };
+  }
+
+  return data;
+}

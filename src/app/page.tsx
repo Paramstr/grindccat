@@ -7,13 +7,14 @@ import { useTestStore } from '@/store/testStore'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { getQuestionCountsByCategory } from '@/lib/supabase'
 
 export default function HomePage() {
   const [inputUsername, setInputUsername] = useState('')
   const [numQuestions, setNumQuestions] = useState('30')
-  const [timePerQuestion, setTimePerQuestion] = useState('18')
   const router = useRouter()
   const { setUsername } = useTestStore()
+  const [questionCounts, setQuestionCounts] = useState({ verbal: 0, math: 0 })
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -21,6 +22,10 @@ export default function HomePage() {
     if (usernameParam) {
       setInputUsername(usernameParam)
     }
+  }, [])
+
+  useEffect(() => {
+    getQuestionCountsByCategory().then(setQuestionCounts)
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,7 +81,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="h-px bg-zinc-700" />
+              {/* <div className="h-px bg-zinc-700" /> */}
 
               <div className="space-y-4">
                 <div>
@@ -91,17 +96,6 @@ export default function HomePage() {
                   />
                 </div>
 
-                <div>
-                  <label className="text-sm text-zinc-400 block mb-2">Time per Question (seconds)</label>
-                  <Input
-                    type="number"
-                    min="5"
-                    max="60"
-                    className="bg-zinc-700 border-zinc-600 text-white"
-                    value={timePerQuestion}
-                    onChange={(e) => setTimePerQuestion(e.target.value)}
-                  />
-                </div>
               </div>
               
               <Button type="submit" className="w-full bg-zinc-600 hover:bg-zinc-500">
@@ -112,13 +106,30 @@ export default function HomePage() {
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-          <div className="p-4 rounded-lg bg-zinc-800/50 border border-zinc-700">
-            <h3 className="font-semibold text-zinc-100">Verbal Reasoning</h3>
+          <div className="p-4 rounded-lg bg-zinc-800/20 border border-zinc-700/30">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-semibold text-zinc-100">Verbal Reasoning</h3>
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                {questionCounts.verbal} questions
+              </span>
+            </div>
             <p className="text-sm text-zinc-400 mt-1">Test your vocabulary, language comprehension, and analytical thinking</p>
           </div>
-          <div className="p-4 rounded-lg bg-zinc-800/50 border border-zinc-700">
-            <h3 className="font-semibold text-zinc-100">Math & Logic</h3>
+          <div className="p-4 rounded-lg bg-zinc-800/20 border border-zinc-700/30">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-semibold text-zinc-100">Math & Logic</h3>
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                {questionCounts.math} questions
+              </span>
+            </div>
             <p className="text-sm text-zinc-400 mt-1">Challenge your problem-solving abilities with numerical and logical puzzles</p>
+          </div>
+          <div className="p-4 rounded-lg bg-zinc-800/10 border border-zinc-700/20 relative opacity-75">
+            <div className="absolute -top-2 -right-2 bg-zinc-600/50 text-xs px-2 py-1 rounded-full text-zinc-200">
+              Coming Soon
+            </div>
+            <h3 className="font-semibold text-zinc-400">Spatial Reasoning</h3>
+            <p className="text-sm text-zinc-500 mt-1">Enhance your ability to visualize and manipulate shapes and patterns</p>
           </div>
         </div>
       </main>
