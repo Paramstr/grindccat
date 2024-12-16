@@ -39,8 +39,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 text-white relative">
       <div className="absolute inset-0 dotted-background" aria-hidden="true" />
-      <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4 gap-8 relative">
-        <div className="text-center space-y-2 mb-8">
+      <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4 pt-24 gap-12 relative">
+      <div className="text-center space-y-2  mb-8">
           <h1 className="text-7xl font-bold text-zinc-100 font-tt-neoris">
             Grind CCAT
           </h1>

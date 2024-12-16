@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/24/solid'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ResultPieChart } from '@/components/ResultPieChart'
 
 export default function ResultsPage() {
   const { attempts, username, resetTest, testStartTime } = useTestStore()
@@ -54,10 +55,12 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 text-white relative">
-      <div className="absolute inset-0 dotted-background" aria-hidden="true" />
-      <main className="container mx-auto min-h-screen flex flex-col items-center py-8 px-4 relative">
-      <div className="text-center space-y-2 mb-8">
-        <h1 className="text-6xl font-bold text-zinc-100">Grind CCAT</h1>
+    <div className="absolute inset-0 dotted-background" aria-hidden="true" />
+    <main className="container mx-auto min-h-screen flex flex-col items-center justify-center p-4 gap-8 relative">
+      <div className="text-center space-y-2 mt-8 mb-8">
+        <h1 className="text-7xl font-bold text-zinc-100 font-tt-neoris">
+          Grind CCAT
+        </h1>
         <a 
           href="https://x.com/maybeParam" 
           target="_blank" 
@@ -65,26 +68,51 @@ export default function ResultsPage() {
           className="inline-block text-sm text-zinc-500 hover:text-zinc-300 transition-all duration-200 tracking-wide font-light hover:tracking-wider"
         >
           @maybeParam
-        </a>
-      </div>
+      </a>
+    </div>
 
-        <Card className="w-full max-w-3xl bg-zinc-800 border-zinc-700 mb-8">
-          <CardHeader className="space-y-4">
-            <CardTitle className="text-zinc-100 text-center text-2xl">
+        <Card className="w-full max-w-3xl bg-zinc-800/50 border-zinc-700 mb-8 backdrop-blur-sm">
+          <CardHeader className="space-y-6">
+            <CardTitle className="text-zinc-100 text-center text-3xl font-tt-neoris">
               Results for {username}
             </CardTitle>
-            <div className="text-center space-y-2">
-              <p className="text-xl text-zinc-100">Score: {score} / {attempts.length}</p>
-              <p className="text-lg text-zinc-400">Total Time: {totalTime} seconds</p>
-              <Button 
-                onClick={() => {
-                  resetTest()
-                  router.push(`/?username=${username}`)
-                }} 
-                className="mt-4 bg-zinc-600 hover:bg-zinc-500 text-white"
-              >
-                Take Again
-              </Button>
+            
+            <div className="border-b border-zinc-700/50 pb-6">
+              <div className="text-center space-y-3">
+                <p className="text-2xl text-zinc-100">
+                  Total Score: <span className="font-bold">{score}</span> / {attempts.length}
+                </p>
+                <p className="text-lg text-zinc-400">Time: {totalTime} seconds</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-4">
+              <div className="space-y-4">
+                <h3 className="inline-block px-3 py-1.5 rounded-lg text-lg font-medium text-white text-center bg-purple-600/20 border border-purple-500/30 w-full">
+                  Verbal Reasoning
+                </h3>
+                <ResultPieChart attempts={attempts} category="Verbal" />
+              </div>
+              <div className="space-y-4">
+                <h3 className="inline-block px-3 py-1.5 rounded-lg text-lg font-medium text-white text-center bg-blue-600/20 border border-blue-500/30 w-full">
+                  Math & Logic
+                </h3>
+                <ResultPieChart attempts={attempts} category="Math & Logic" />
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-700/50 pt-6">
+              <div className="text-center">
+                <Button 
+                  onClick={() => {
+                    resetTest()
+                    router.push(`/?username=${username}`)
+                  }} 
+                  className="bg-zinc-700 hover:bg-zinc-600 text-white"
+                >
+                  Take Again
+                </Button>
+              </div>
             </div>
           </CardHeader>
         </Card>

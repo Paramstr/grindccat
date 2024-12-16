@@ -18,75 +18,32 @@ export default function CountdownPage() {
         setLoading(true)
         const params = new URLSearchParams(window.location.search)
         const numQuestions = parseInt(params.get('numQuestions') || '30', 10)
-        // Use floor for verbal and remainder for math to get exact total
-        const verbalCount = Math.floor(numQuestions / 2)
+        // Always split evenly between verbal and math
+        const verbalCount = Math.ceil(numQuestions / 2)
         const mathCount = numQuestions - verbalCount
 
-        // First get the list of attempted question IDs through the test_attempts table
-        const { data: attemptedQuestions } = await supabase
-          .from('test_attempts')
-          .select(`
-            id,
-            question_attempts(question_id)
-          `)
-          .eq('username', username)
-
-        // Extract all question IDs from all attempts
-        const attemptedIds = attemptedQuestions?.flatMap(
-          attempt => attempt.question_attempts?.map(qa => qa.question_id) || []
-        ) || []
-
-        // Get questions for each category from unseen questions
+        // Get random questions for each category
         const [verbalQuestions, mathQuestions] = await Promise.all([
           supabase
-            .from('questions')
+            .from('random_verbal_questions')
             .select('*')
-            .eq('category', 'Verbal')
-            .not('id', 'in', `(${attemptedIds.join(',')})`)
             .limit(verbalCount),
           supabase
-            .from('questions')
+            .from('random_math_questions')
             .select('*')
-            .eq('category', 'Math & Logic')
-            .not('id', 'in', `(${attemptedIds.join(',')})`)
             .limit(mathCount)
         ])
 
         if (verbalQuestions.error || mathQuestions.error) 
           throw verbalQuestions.error || mathQuestions.error
 
-        // If we don't have enough unseen questions in either category, fetch any questions
         if (!verbalQuestions.data || !mathQuestions.data || 
             verbalQuestions.data.length < verbalCount || 
             mathQuestions.data.length < mathCount) {
-          
-          const [allVerbal, allMath] = await Promise.all([
-            supabase
-              .from('questions')
-              .select('*')
-              .eq('category', 'Verbal')
-              .limit(verbalCount),
-            supabase
-              .from('questions')
-              .select('*')
-              .eq('category', 'Math & Logic')
-              .limit(mathCount)
-          ])
-
-          if (allVerbal.error || allMath.error) 
-            throw allVerbal.error || allMath.error
-
-          // Combine and shuffle both categories
-          const shuffledQuestions = [
-            ...(allVerbal.data || []),
-            ...(allMath.data || [])
-          ].sort(() => Math.random() - 0.5)
-
-          setQuestions(shuffledQuestions)
-          return
+          throw new Error('Not enough questions available')
         }
 
-        // Combine and shuffle both categories of unseen questions
+        // Combine and shuffle both categories
         const shuffledQuestions = [
           ...verbalQuestions.data,
           ...mathQuestions.data
