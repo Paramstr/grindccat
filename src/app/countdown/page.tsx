@@ -120,7 +120,7 @@ export default function CountdownPage() {
       const elapsedTime = Date.now() - startTime
       const newCount = 3 - Math.floor(elapsedTime / 1000)
       
-      if (newCount >= 0) {
+      if (newCount > 0) {
         setCount(newCount)
         timeoutId = setTimeout(updateCount, 1000 - (elapsedTime % 1000))
       } else {
