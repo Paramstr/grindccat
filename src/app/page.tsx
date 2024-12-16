@@ -32,7 +32,7 @@ export default function HomePage() {
     e.preventDefault()
     if (inputUsername.trim()) {
       setUsername(inputUsername.trim())
-      router.push('/countdown')
+      router.push(`/countdown?numQuestions=${numQuestions}`)
     }
   }
 
